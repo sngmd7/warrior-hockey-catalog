@@ -1,0 +1,31 @@
+name: Omarchy Runner Smoke
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: [self-hosted, Linux, X64, secondslide-omarchy]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: python -c 'import ssl, sqlite3; print(ssl.OPENSSL_VERSION)'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Record runner acceptance
+        run: |
+          mkdir -p "$RUNNER_TEMP/omarchy-smoke"
+          printf '%s\n' "$GITHUB_SHA" > "$RUNNER_TEMP/omarchy-smoke/source-sha.txt"
+          node --version > "$RUNNER_TEMP/omarchy-smoke/node-version.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: omarchy-runner-acceptance
+          path: ${{ runner.temp }}/omarchy-smoke/
+          retention-days: 3
